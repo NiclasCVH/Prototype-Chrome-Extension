@@ -1,14 +1,24 @@
+/* To-do list:
+
+3. Create simple card editing
+4. Build data saving feature
+5. Re-introduce 3d features and graphic touch-ups
+
+ */
 
 var rectangles
 var width
 var height
+var widthMargin = -15
+var heightMargin = -15
 var running = false
 var firstTime = true
 var time
 var hms = []
-var viewfinderRatio
 var ageInput
+var currentSelection
 
+var life
 
 function setup() {
 
@@ -16,38 +26,31 @@ function setup() {
 	ageInput.parent("ageParent")
 	ageInput.style("background","black")
 	ageInput.style("color","white")
-	ageInput.style("top","-30px")
 	ageInput.changed(() => {initialise()})
 
 	//MAIN GRAPHICS SET-UP
-	width = windowWidth
-	height = windowHeight
-	createCanvas(width, height, WEBGL);
+	width = window.innerWidth + widthMargin
+	height = window.innerHeight + heightMargin
+	createCanvas(width, height);
 	background(0)
-	cam = createCamera()
-	cam.setPosition(0,0,(height/2)/tan(PI*27.5/180))
-	ambientLight(255);
-	graphics = createGraphics(width, height);
 
-	rectangles = new Rectangles(64,20,40,10,10,width/2,height/2)
-	viewfinderRatio = height/rectangles.h
+	// rectangles = new Rectangles(0,20,40,10,10,width/2,height/2)
 
 	//CLOCK ELEMENT SET-UP
 	updateTime()
 
 	//INITIALISE FIRST FRAME
 
-	drawRectangleTexture();
-	plane(width,height);
+	// drawRectangles(rectangles)
 
 	clock = createSpan(hms[0] + ":" + hms[1] + ":" + hms[2])
 	clock.style("font-size", "40px")
-	clock.position(rectangles.x + clock.size().width*0.06, rectangles.y - clock.size().height*0.5-20)
+	clock.style("color","white")
+	clock.position(0,0)
 
 	if (firstTime) {
 		fill(0);
-		plane(width,height);
-		clock.style("color","black")
+		clock.style("opacity","0")
 	}
 }
 
@@ -64,12 +67,7 @@ function draw() {
 	if (running & !firstTime) {
 
 		background(0)
-		
-		drawRectangleTexture();
-
-		rotateByMouse()
-
-		plane(width,height);
+		drawRectangles(rectangles);
 	}
 }
 
@@ -77,61 +75,103 @@ function draw() {
 
 //FUNCTIONS:
 
+function mouseClicked(){
+	if (!firstTime) {
+		var h = rectangles.h;
+		var w = rectangles.w;
+		var x = rectangles.x;
+		var y = rectangles.y;
+		var localX
+		var localY
+		var colNum
+		var rowNum
+
+		if (mouseX > x && mouseX < x + w 
+			&& mouseY > y && mouseY < y + h) {
+
+			localX = mouseX - x
+			localY = mouseY - y
+
+			colIndex = ceilMultiple(localX, rectangles.rectW + rectangles.padding) - 1
+			rowIndex = ceilMultiple(localY, rectangles.rectH + rectangles.padding) - 1
+
+			if (localX < (colIndex + 1)*rectangles.rectW + colIndex*rectangles.padding &&
+				localY < (rowIndex + 1)*rectangles.rectH + rowIndex*rectangles.padding) {
+				let index = colIndex + rowIndex*rectangles.maxCol
+				
+				// console.log(index)
+				console.log(currentSelection.array[index].value)
+				console.log(currentSelection.array[index].current)
+
+				if (currentSelection.id !== "month") {
+					currentSelection = currentSelection.array[index]
+
+					rectangles = new Rectangles(currentSelection,width/2,height/2)
+					clock.position(rectangles.x, rectangles.y - clock.size().height)
+				}
+			}
+		} else if (currentSelection.id !== "life") {
+				currentSelection = currentSelection.parent
+
+				rectangles = new Rectangles(currentSelection,width/2,height/2)
+				clock.position(rectangles.x, rectangles.y - clock.size().height)
+		}
+	}
+}
+
+function ceilMultiple(n,multiple) {
+	if ( n > 0 ){
+		return Math.ceil(n/multiple)
+	 } else if ( n < 0) {
+	 	return Math.floor(n/multiple)
+	 } else {
+	 	return 1
+	 }
+}
+
 function initialise(){
 	if (firstTime & !isNaN(ageInput.value())) {
 		firstTime = !firstTime
 		ageInput.remove()
 		document.getElementById("ageBox").remove()
-		clock.style("color","white")
-		rectangles = new Rectangles(ageInput.value(),20,40,10,10,width/2,height/2)
+
+		life = new Life(ageInput.value())
+		buildLife(life)
+		currentSelection = life
+
+		rectangles = new Rectangles(currentSelection,width/2,height/2)
+		clock.style("opacity","1")
+		clock.position(rectangles.x, rectangles.y - clock.size().height)
 	}
 }
 
 function windowResized() {
 
 	//UPDATE DIMENSIONS
-	width = windowWidth-3;
-	height = windowHeight-3;
+	width = window.innerWidth + widthMargin;
+	height = window.innerHeight + heightMargin;
 
 	//RESIZES CANVAS & RECTANGLES
 	resizeCanvas(width,height);
-	graphics = createGraphics(width, height);
-	graphics.background(0);
+	background(0);
 
 	rectangles.x = width/2 - rectangles.w/2
 	rectangles.y = height/2 - rectangles.h/2
 
-	drawRectangleTexture();
-
 	if (!firstTime){
-		plane(width,height);
+		drawRectangles(rectangles);
 	}
 
-	cam.setPosition(0,0,(height/2)/tan(PI*27.5/180))
-
 	//UPDATES CLOCK POSITION
-	clock.position(rectangles.x + clock.size().width*0.06, rectangles.y - clock.size().height*0.5-20);
+	clock.position(rectangles.x, rectangles.y - clock.size().height);
 }
 
-function startUp() {
-	let entryText = createP("TEST")
-	entryText.position(width/2, height/2)
-}
 
 function mousePressed() {
 
 	if (!running) {
 		running = !running
 	}
-}
-
-function zoom() {
-
-	xOffset = rectangles.array[0][0].x + rectangles.array[0][0].w/2 + rectangles.x - rectangles.centreX
-	yOffset = rectangles.array[0][0].y + rectangles.array[0][0].h/2 + rectangles.y - rectangles.centreY
-
-	cam.setPosition(xOffset,yOffset,(viewfinderRatio*rectangles.rectH/2)/tan(PI*30/180))
-
 }
 
 function updateTime() {
@@ -153,24 +193,15 @@ function updateTime() {
 
 }
 
-function drawRectangleTexture() {
-	graphics.clear();
-	graphics.stroke(255);
-	graphics.strokeWeight(2)
-	graphics.noFill();
-	for (let y of rectangles.array) {
-		for (let x of y) {
-			graphics.rect(x.x + rectangles.x,x.y + rectangles.y,x.w,x.h)
+function drawRectangles(rectangles) {
+	clear();
+	strokeWeight(2)
+	noFill();
+		for (let y of rectangles.array) {
+			for (let x of y) {
+			stroke(x.card.stroke)
+			fill(x.card.fill,x.card.alpha);
+			rect(x.x + rectangles.x,x.y + rectangles.y,x.w,x.h)
+			}
 		}
 	}
-
-	texture(graphics);
-}
-
-function rotateByMouse() {
-	var yAngle = map(mouseX - width/2, -width/2, width/2, -PI/30, PI/30)
-	var xAngle = -map(mouseY - height/2, -height/2, height/2, -PI/30, PI/30)
-
-	rotateY(yAngle);
-	rotateX(xAngle);
-}

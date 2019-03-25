@@ -100,8 +100,7 @@ function mouseClicked(){
 				let index = colIndex + rowIndex*rectangles.maxCol
 				
 				// console.log(index)
-				console.log(currentSelection.array[index].value)
-				console.log(currentSelection.array[index].current)
+				console.log(currentSelection.array[index].age)
 
 				if (currentSelection.id !== "month") {
 					currentSelection = currentSelection.array[index]

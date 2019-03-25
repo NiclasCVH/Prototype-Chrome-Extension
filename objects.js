@@ -1,26 +1,28 @@
 //DATE CLASSES & FUNCTIONS
 
 class Card {
-	constructor(value, id, parent, value2) {
-		this.value = value
-
-		if (typeof value2 === "undefined") {
-			this.value2 = null
-		} else {
-			this.value2 = value2
-		}
-
-		this.current = false
+	constructor(value, id, parent, date) {
 		this.id = id
 		this.parent = parent
 		this.array = []
+		this.value = value
+
+		if (this.id == "month") {
+			this.date = date
+		}
+
+		if (this.id == "year") {
+			this.age = this. value - this.parent.birthYear
+		}
+
+		this.current = false
 		this.fill = 0
 		this.alpha = 0
 		this.stroke = 255
 	}
 
-	buildChild(value, id, index, value2) {
-		this.array[index] = new Card(value, id, this, value2)
+	buildChild(value, id, index, date) {
+		this.array[index] = new Card(value, id, this, date)
 	}
 }
 
@@ -154,6 +156,8 @@ class Rectangles {
 					pastCurrent = true
 				} else if (!pastCurrent && (cardSelect.parent.current || cardSelect.parent.id == "life")) {
 					cardSelect.stroke = 100
+				} else if (cardSelect = "year" & cardSelect.age > 75) {
+					cardSelect.stroke = 255 - (cardSelect.age - 75)*51
 				}
 			}
 		}
@@ -166,6 +170,11 @@ class Rectangles {
 				if (cardSelect.current) {
 					cardSelect.fill = 255
 					cardSelect.alpha = 255
+					pastCurrent = true
+				} else if (!pastCurrent && (cardSelect.parent.current || cardSelect.parent.id == "life")) {
+					cardSelect.stroke = 100
+				} else if (cardSelect.id = "year" && cardSelect.age > 75) {
+					cardSelect.stroke = 255 - (cardSelect.age - 75)*51
 				}
 		}
 

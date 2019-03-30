@@ -1,3 +1,52 @@
+//MOUSE CLASS
+class Click {
+	constructor(storedX, storedY, startTime,timeElapsed, active) {
+		this.x = storedX
+		this.y = storedY
+		this.startTime = startTime
+		this.timeElapsed
+		this.active
+		this.arrayIndex
+		this.colIndex
+		this.rowIndex
+		this.offRectangles
+		this.offArray
+	}
+
+	singleClick(){}
+	doubleClick(){}
+
+	clickedRectangles() {
+		var h = rectangles.h;
+		var w = rectangles.w;
+		var x = rectangles.x;
+		var y = rectangles.y;
+
+		if (this.x > x && this.x < x + w 
+			&& this.y > y && this.y < y + h) {
+
+			this.offRectangles = false
+
+			var localX = this.x - x
+			var localY = this.y - y
+
+			var colIndex = ceilMultiple(localX, rectangles.rectW + rectangles.padding) - 1
+			var rowIndex = ceilMultiple(localY, rectangles.rectH + rectangles.padding) - 1
+
+			if (localX < (colIndex + 1)*rectangles.rectW + colIndex*rectangles.padding &&
+				localY < (rowIndex + 1)*rectangles.rectH + rowIndex*rectangles.padding) {
+				this.offArray = false
+				this.arrayIndex = colIndex + rowIndex*rectangles.maxCol
+				this.colIndex = colIndex
+				this.rowIndex = rowIndex
+			} else { this.offArray = true }
+		} else {
+			this.offRectangles = true
+		}
+	}
+}
+
+
 //DATE CLASSES & FUNCTIONS
 
 class Card {
@@ -94,6 +143,54 @@ function firstDayofMonth(month,year) {
 
 //DRAWING CLASSES
 
+class Clock {
+	constructor() {
+		this.span
+		this.time
+		this.hms = []
+
+	}
+
+	initialise() {
+		this.updateTime()
+		this.span = createSpan(this.hms[0] + ":" + this.hms[1] + ":" + this.hms[2])
+		this.span.style("font-size", "40px")
+		this.span.style("color","white")
+		this.span.position(0,0)
+	}
+
+	updateTime() {
+		this.time = new Date()
+
+		this.hms[0] = this.time.getHours().toString()
+		this.hms[1] = this.time.getMinutes().toString()
+		this.hms[2] = this.time.getSeconds().toString()
+
+		this.hms = this.hms.map( (t) => {
+
+			if (t.length == 1) {
+				return ("0" + t)
+			} else {
+				return t
+			}
+
+		})
+	}
+
+	draw() {
+		this.updateTime()
+		this.span.html(this.hms[0] + ":" + this.hms[1] + ":" + this.hms[2])
+	}
+
+	positionByRectangles() {
+		clock.span.position(rectangles.x, rectangles.y - clock.span.size().height);
+	}
+
+	position(x,y) {
+		clock.span.position(x, y - clock.span.size().height);
+	}
+}
+
 class Rectangle {
 	constructor(x,y,w,h,card) {
 		this.x = x;
@@ -115,16 +212,19 @@ class Rectangles {
 			this.rectW = 20;
 			this.rectH = 40;
 			this.padding = 10;
+			this.strokeWeight = 1
 		} else if (id == "year") {
 			this.maxCol = 3
 			this.rectW = 40;
 			this.rectH = 80;
 			this.padding = 20;
+			this.strokeWeight = 1.5
 		} else if (id == "month") {
 			this.maxCol = 7
 			this.rectW = 20;
 			this.rectH = 40;
 			this.padding = 10;
+			this.strokeWeight = 1
 		} else {
 			this.maxCol = 10
 		}
@@ -134,7 +234,7 @@ class Rectangles {
 		this.xSpacing = this.rectW + this.padding;
 		this.ySpacing = this.rectH + this.padding
 		this.w = max(this.lastRow,this.maxCol)*this.xSpacing;
-		this.h = this.maxRow*this.ySpacing;
+		this.h = (this.maxRow)*this.ySpacing;
 		this.centreX = x
 		this.centreY = y
 		this.x = x - this.w/2
@@ -156,16 +256,16 @@ class Rectangles {
 					pastCurrent = true
 				} else if (!pastCurrent && (cardSelect.parent.current || cardSelect.parent.id == "life")) {
 					cardSelect.stroke = 100
-				} else if (cardSelect = "year" & cardSelect.age > 75) {
+				} else if (cardSelect == "year" & cardSelect.age > 75) {
 					cardSelect.stroke = 255 - (cardSelect.age - 75)*51
 				}
 			}
 		}
 
-		array[this.maxRow -1] = [];
+		array[this.maxRow - 1] = [];
 		for (let x = 0; x < this.lastRow; x++) {
-			let cardSelect = currentSelection.array[x+(this.maxRow-1)*this.maxCol]
-			array[this.maxRow -1][x] = new Rectangle(x*this.xSpacing, (this.maxRow - 1)*this.ySpacing, this.rectW, this.rectH,cardSelect)
+			let cardSelect = currentSelection.array[x+(this.maxRow - 1)*this.maxCol]
+			array[this.maxRow - 1][x] = new Rectangle(x*this.xSpacing, (this.maxRow - 1)*this.ySpacing, this.rectW, this.rectH, cardSelect)
 			let rectSelect = array[this.maxRow - 1][x]
 				if (cardSelect.current) {
 					cardSelect.fill = 255
@@ -173,11 +273,21 @@ class Rectangles {
 					pastCurrent = true
 				} else if (!pastCurrent && (cardSelect.parent.current || cardSelect.parent.id == "life")) {
 					cardSelect.stroke = 100
-				} else if (cardSelect.id = "year" && cardSelect.age > 75) {
+				} else if (cardSelect.id == "year" && cardSelect.age > 75) {
 					cardSelect.stroke = 255 - (cardSelect.age - 75)*51
 				}
 		}
 
 		this.array = array;
 	}
+}
+
+function ceilMultiple(n,multiple) {
+	if ( n > 0 ){
+		return Math.ceil(n/multiple)
+	 } else if ( n < 0) {
+	 	return Math.floor(n/multiple)
+	 } else {
+	 	return 1
+	 }
 }

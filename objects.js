@@ -44,6 +44,15 @@ class Click {
 			this.offRectangles = true
 		}
 	}
+
+	inArea(x0,y0,x1,y1) {
+		if (this.x > x0 && this.x < x1
+			&& this.y > y0 && this.y < y1) {
+			return true
+		} else {
+			return false
+		}
+	}
 }
 
 
@@ -68,6 +77,11 @@ class Card {
 		this.fill = 0
 		this.alpha = 0
 		this.stroke = 255
+
+		this.editing = false
+		this.text = ""
+		this.h
+		this.w
 	}
 
 	buildChild(value, id, index, date) {
@@ -87,6 +101,8 @@ class Life {
 
 		for (let n = 0; n < 80; n++) {
 			this.array[n] = new Card(birthYear + n, "year", this)
+		
+		this.editing = false
 		}
 	}
 }
@@ -117,6 +133,7 @@ function buildLife(life) {
 	}
 
 	assignCurrent(life)
+	updateColors(life)
 }
 
 function assignCurrent(life) {
@@ -130,6 +147,70 @@ function assignCurrent(life) {
 	life.array[yearIndex].current = true
 	life.array[yearIndex].array[monthIndex].current = true
 	life.array[yearIndex].array[monthIndex].array[dateIndex].current = true
+}
+
+function updateColors(life) {
+
+	//CURRENT COLORING
+	var pastCurrent = false
+	var currentYearIndex
+	var currentMonthIndex
+
+	for (let year of life.array) {
+
+		if (year.age > 75) {
+			year.stroke = 255 - (year.age - 75)*51
+		}
+
+		if (year.current) {
+			year.fill = 255
+			year.alpha = 255
+			pastCurrent = true
+			currentYearIndex = life.array.indexOf(year)
+		} else if (!pastCurrent) {
+			year.stroke = 100
+		}
+	}
+
+	for (let i = 0; i < currentYearIndex; i++) {
+		for (let month of life.array[i].array) {
+			month.stroke = 100
+			for (let day of month.array) {
+				day.stroke = 100
+			}
+		}
+	}
+
+	pastCurrent = false
+	for (let month of life.array[currentYearIndex].array) {
+		if (month.current) {
+			month.fill = 255
+			month.alpha = 255
+			pastCurrent = true
+			currentMonthIndex = life.array[currentYearIndex].array.indexOf(month)
+		} else if (!pastCurrent) {
+			month.stroke = 100
+		}
+	}
+
+	for (let i = 0; i < currentMonthIndex; i++) {
+		for (let day of life.array[currentYearIndex].array[i].array) {
+			day.stroke = 100
+		}
+	}
+
+	pastCurrent = false
+	for (let day of life.array[currentYearIndex].array[currentMonthIndex].array) {
+		if (day.current) {
+			day.fill = 255
+			day.alpha = 255
+			pastCurrent = true
+		} else if (!pastCurrent) {
+			day.stroke = 100
+		}
+	}
+
+	pastCurrent = false
 }
 
 function daysInMonth(month,year) {
@@ -249,7 +330,6 @@ class Rectangles {
 			for (let x = 0; x < this.maxCol; x++) {
 				let cardSelect = currentSelection.array[x+y*this.maxCol]
 				array[y][x] = new Rectangle(x*this.xSpacing, y*this.ySpacing, this.rectW, this.rectH, cardSelect)
-				let rectSelect = array[y][x]
 				if (cardSelect.current) {
 					cardSelect.fill = 255
 					cardSelect.alpha = 255
@@ -266,7 +346,6 @@ class Rectangles {
 		for (let x = 0; x < this.lastRow; x++) {
 			let cardSelect = currentSelection.array[x+(this.maxRow - 1)*this.maxCol]
 			array[this.maxRow - 1][x] = new Rectangle(x*this.xSpacing, (this.maxRow - 1)*this.ySpacing, this.rectW, this.rectH, cardSelect)
-			let rectSelect = array[this.maxRow - 1][x]
 				if (cardSelect.current) {
 					cardSelect.fill = 255
 					cardSelect.alpha = 255

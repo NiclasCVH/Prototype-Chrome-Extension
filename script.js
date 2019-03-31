@@ -1,10 +1,9 @@
 /* To-do list:
 
 3. Create simple card editing
-	a. Clean up code
-	b. Create card selection function
-	c. in-card text editing, and top-level indicator
-4. Build data saving feature
+	c. navigation level indicators for card text content
+	d. simple color editing
+4. Build cross-session data saving feature
 5. Re-introduce 3d features and graphic touch-ups
 
  */
@@ -29,28 +28,37 @@ var rectanglesY0
 
 var click = new Click(0,0,0,0,false)
 click.singleClick = function() {
-	if (cardEditing) {
-		if (click.offRectangles) {	
-			textbox.remove()
-			cardEditing = !cardEditing
-		}
-	} else if (!click.offRectangles){
-		createCardTextBox()
-		cardEditing = !cardEditing
+	if (!currentSelection.editing && !click.offRectangles) {
+
+		currentSelection = currentSelection.array[click.arrayIndex]
+		currentSelection.editing = true
+		createCardTextBox(currentSelection)
+
+	} else if (currentSelection.editing 
+			   && !click.inArea(width/2 - currentSelection.w/2, height/2 - currentSelection.h/2, 
+			   	   				width/2 + currentSelection.w/2, height/2 + currentSelection.h/2)) {
+
+		currentSelection.text = textbox.value()
+		textbox.remove()
+		currentSelection.editing = false
+		currentSelection = currentSelection.parent
+
 	}
 }
 
 click.doubleClick = function() {
-	if (click.offRectangles && currentSelection.id !== "life") {
-		currentSelection = currentSelection.parent
+	if (!currentSelection.editing) {
+		if (click.offRectangles && currentSelection.id !== "life") {
+			currentSelection = currentSelection.parent
 
-		rectangles = new Rectangles(currentSelection,width/2,height/2)
-	}
+			rectangles = new Rectangles(currentSelection,width/2,height/2)
+		}
 
-	if (!click.offRectangles && !cardEditing && !click.offArray && currentSelection.id !== "month") {
-		currentSelection = currentSelection.array[click.arrayIndex]
+		if (!click.offRectangles && !click.offArray && currentSelection.id !== "month") {
+			currentSelection = currentSelection.array[click.arrayIndex]
 
-		rectangles = new Rectangles(currentSelection,width/2,height/2)
+			rectangles = new Rectangles(currentSelection,width/2,height/2)
+		}
 	}
 }
 
@@ -103,10 +111,10 @@ function draw() {
 		
 		background(0)
 
-		if (!cardEditing) {
+		if (!currentSelection.editing) {
 			drawRectangles(rectangles);
 		} else {
-			drawCard()
+			drawCard(currentSelection)
 		}
 	}
 }
@@ -136,16 +144,16 @@ function selectCard() {
 }
 
 function drawCard(card) {
-	var cardH = height*(3/4)
-	var cardW = (rectangles.rectW/rectangles.rectH)*cardH
+	card.h = height*(3/4)
+	card.w = (rectangles.rectW/rectangles.rectH)*card.h
 	noFill()
 	strokeWeight(2)
 	stroke(255)
-	rect(rectangles.x + rectangles.w/2 - cardW/2,rectangles.centreY - cardH/2,cardW,cardH)
-	clock.position(rectangles.x + rectangles.w/2 - cardW/2,rectangles.centreY - cardH/2)
+	rect(rectangles.x + rectangles.w/2 - card.w/2,rectangles.centreY - card.h/2,card.w,card.h)
+	clock.position(rectangles.x + rectangles.w/2 - card.w/2,rectangles.centreY - card.h/2)
 }
 
-function createCardTextBox() {
+function createCardTextBox(card) {
 	var cardH = height*(3/4)
 	var cardW = (rectangles.rectW/rectangles.rectH)*cardH
 	textbox = createElement("textarea")
@@ -156,6 +164,7 @@ function createCardTextBox() {
 	textbox.style("border","none")
 	textbox.style("fontsize")
 	textbox.style("color","white")
+	textbox.value(card.text)
 }
 
 function mousePressed() {

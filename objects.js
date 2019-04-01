@@ -90,19 +90,48 @@ class Card {
 }
 
 class Life {
-	constructor(age) {
+	constructor(birthYear) {
 		this.array = []
 		this.id = "life"
-
-		var today = new Date()
-		var yearToday = today.getYear() + 1900
-		var birthYear = yearToday - age
 		this.birthYear = birthYear
 
 		for (let n = 0; n < 80; n++) {
 			this.array[n] = new Card(birthYear + n, "year", this)
 		
 		this.editing = false
+		}
+	}
+
+	saveText() {
+		var savedLife = []
+		savedLife[0] = this.birthYear
+		savedLife[1] = []
+		for (let a = 0; a < this.array.length; a++) {
+			let year = this.array[a]
+			savedLife[1][a] = [year.text,[]]
+			for (let b = 0; b < 12; b++) {
+				let month = year.array[b]
+				savedLife[1][a][1][b] = [month.text,[]]
+				for (let c = 0; c < month.array.length; c++) {
+					let day = month.array[c]
+					savedLife[1][a][1][b][1][c] = [day.text]
+				}
+			}
+		}
+
+		chrome.storage.local.set({"life": savedLife}, () => {console.log("saved")})
+	}
+
+	loadText(savedLife) {
+		this.birthYear = savedLife[0]
+		for (let a = 0; a < savedLife[1].length; a++) {
+			this.array[a].text = savedLife[1][a][0]
+			for (let b = 0; b < 12; b++) {
+				this.array[a].array[b].text = savedLife[1][a][1][b][0]
+				for (let c = 0; c < savedLife[1][b][1].length; c++) {
+					this.array[a].array[b].array[c].text = savedLife[1][a][1][b][1][c][0]
+				}
+			}
 		}
 	}
 }

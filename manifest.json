@@ -3,9 +3,11 @@
 	"version": "0.3.1",
 	"description": "Build an Extension!",
 	"manifest_version": 2,
+	
 	"permissions": [
-		"contextMenus"
+		"storage"
 	],
+
 	"chrome_url_overrides": {
 		"newtab": "mypage.html"
 	},
@@ -13,3 +15,4 @@
 	"page_action": {
 		"default_popup": "popup.html"
 	}
+}

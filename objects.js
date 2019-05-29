@@ -80,6 +80,8 @@ class Card {
 
 		this.editing = false
 		this.text = ""
+		this.numLines
+
 		this.h
 		this.w
 	}
@@ -128,7 +130,7 @@ class Life {
 			this.array[a].text = savedLife[1][a][0]
 			for (let b = 0; b < 12; b++) {
 				this.array[a].array[b].text = savedLife[1][a][1][b][0]
-				for (let c = 0; c < savedLife[1][b][1].length; c++) {
+				for (let c = 0; c < savedLife[1][a][1][b][1].length; c++) {
 					this.array[a].array[b].array[c].text = savedLife[1][a][1][b][1][c][0]
 				}
 			}
@@ -266,6 +268,7 @@ class Clock {
 		this.span = createSpan(this.hms[0] + ":" + this.hms[1] + ":" + this.hms[2])
 		this.span.style("font-size", "40px")
 		this.span.style("color","white")
+		this.span.style("opacity","0")
 		this.span.position(0,0)
 	}
 
@@ -335,8 +338,6 @@ class Rectangles {
 			this.rectH = 40;
 			this.padding = 10;
 			this.strokeWeight = 1
-		} else {
-			this.maxCol = 10
 		}
 
 		this.maxRow = ceil(this.rectNum/this.maxCol);

@@ -4,11 +4,9 @@ var width
 var height
 var widthMargin = -15
 var heightMargin = -15
-var firstTime = true
+var initialised = false
 var ageInput
 var currentSelection
-var rectanglesX0
-var rectanglesY0
 
 //MOUSE EVENTS -------------------------------------
 
@@ -54,7 +52,7 @@ click.doubleClick = function() {
 }
 
 function mouseClicked() {
-	if (!firstTime) {
+	if (initialised) {
 		if (!click.active) {
 			click.x = mouseX
 			click.y = mouseY
@@ -72,8 +70,7 @@ function mouseClicked() {
 //FUNCTIONS -------------------------------------
 
 function keyPressed() {
-	if (keyCode === ENTER) {
-		numberOfLines(currentSelection.text)
+	if (keyCode === 13) {
 	}
 }
 
@@ -82,7 +79,7 @@ function drawCard(card) {
 	card.w = (rectangles.rectW/rectangles.rectH)*card.h
 	noFill()
 	strokeWeight(2)
-	stroke(255)
+	stroke(card.stroke)
 	rect(rectangles.x + rectangles.w/2 - card.w/2,rectangles.centreY - card.h/2,card.w,card.h)
 	clock.position(rectangles.x + rectangles.w/2 - card.w/2,rectangles.centreY - card.h/2)
 }
@@ -91,37 +88,42 @@ function createCardTextBox(card) {
 	var cardH = height*(3/4)
 	var cardW = (rectangles.rectW/rectangles.rectH)*cardH
 	textbox = createElement("textarea")
-	textbox.position(rectangles.x + rectangles.w/2 - cardW/2,rectangles.centreY - cardH/2)
-	textbox.size(cardW,cardH)
+	textbox.position(rectangles.x + rectangles.w/2 - cardW*0.9/2,rectangles.centreY - cardH*0.95/2)
+	textbox.size(cardW*0.9,cardH*0.95)
 	textbox.style("background","transparent")
 	textbox.style("outline","none")
 	textbox.style("border","none")
 	textbox.style("fontsize")
-	textbox.style("color","white")
+	textbox.style("resize","none")
+	if (card.stroke == 100) {
+		textbox.style("color","grey")
+	} else {
+		textbox.style("color","white")
+	}
 	textbox.value(card.text)
 }
 
 //Initialisation
 function initialise(){
 	ageInput.remove()
+	ageBox 
 	document.getElementById("ageBox").remove()
+	clock.initialise()
+
+	//IMG INITIALISE
+	img = createImg("plato.png")
+	img.size(200,200*1.2427)
+	img.position(50, height - 200*1.2427)
+	img.style("pointer-events","none")
+	img.style("-webkit-user-select", "none")
+	img.style("opacity",0)
 
 	life = new Life(2019 - ageInput.value())
 	buildLife(life)
 	currentSelection = life
 
 	rectangles = new Rectangles(currentSelection,width/2,height/2)
-	clock.span.style("opacity","1")
 	clock.positionByRectangles()
-
-	rectanglesX0 = rectangles.x
-	rectanglesY0 = rectangles.y
-
-	if(width/2 - rectangles.w/2 > 230) {
-		img.style("opacity","1")
-	} else {
-		img.style("opacity","0")
-	}
 }
 
 //Drawing
@@ -138,7 +140,7 @@ function windowResized() {
 	rectangles.x = width/2 - rectangles.w/2
 	rectangles.y = height/2 - rectangles.h/2
 
-	if (!firstTime){
+	if (initialised){
 		drawRectangles(rectangles);
 
 		if (currentSelection.editing) {
@@ -146,12 +148,6 @@ function windowResized() {
 			textbox.remove()
 			createCardTextBox(currentSelection)
 		}
-	}
-
-	if(width/2 - rectangles.w/2 > 230) {
-		img.style("opacity","1")
-	} else {
-		img.style("opacity","0")
 	}
 }
 
@@ -161,9 +157,32 @@ function drawRectangles(rectangles) {
 	noFill();
 		for (let y of rectangles.array) {
 			for (let x of y) {
+				let globalX = x.x + rectangles.x
+				let globalY = x.y + rectangles.y
 				stroke(x.card.stroke)
+				strokeWeight(rectangles.strokeWeight)
 				fill(x.card.fill,x.card.alpha);
-				rect(x.x + rectangles.x,x.y + rectangles.y,x.w,x.h)
+				rect(globalX,globalY,x.w,x.h)
+				let nLines =  numberOfLines(x.card.text)
+				let lineLimit = Math.ceil(nLines/2)
+				if (lineLimit > 8) {
+					lineLimit = 9
+				}
+				for (let i = 0; i < lineLimit; i++) {
+					let lineY = globalY + x.h*0.15 + x.h*i/11
+					let leftLineX = globalX + rectangles.strokeWeight + 0.2*(x.w - rectangles.strokeWeight*2)
+					let rightLineX = globalX + rectangles.strokeWeight + 0.8*(x.w - rectangles.strokeWeight*2)
+					
+					if (x.card.current) {
+						stroke(0)
+					} else {
+						stroke(x.card.stroke)
+					}
+
+					strokeWeight(rectangles.strokeWeight)
+					strokeCap(SQUARE)
+					line(globalX + 0.2*x.w,lineY,globalX + 0.8*x.w,lineY)
+				}
 		}
 	}
 
@@ -171,5 +190,34 @@ function drawRectangles(rectangles) {
 }
 
 function numberOfLines(str) {
-	return str.split(/\r*\w*\n/).length
+	var stringArray = str.split(/\r*\n/)
+	for (let i = 0; i < stringArray.length; i++) {
+		if (stringArray[i].search(/[A-z]/) == -1) {
+			stringArray.splice(i,1)
+			i--
+		}
+	}
+
+	if (str.length/30 > stringArray.length) {
+		return str.length/25
+	} else {
+		return stringArray.length
+	}
+}
+
+// Trouble-shooting:
+
+function Spam() {
+	var str = "wefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfnswefkjajnfkwjaenfkjwnkefjnawkjfnkjewankfjnlsknfkznilfeusnkfuesiufeznezileunsiuzfns"
+
+	for (var i of life.array) {
+		for (var u of i.array) {
+			for (var o of u.array) {
+				o.text = str
+			}
+			u.text = str
+		}
+		i.text = str
+	}
+	life.saveText()
 }

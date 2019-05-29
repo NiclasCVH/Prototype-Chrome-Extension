@@ -23,6 +23,15 @@
         float: left;
         clear: none;
       }
+
+      .centerNone {
+        font-size: 35px;
+        color: black;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%)
+      }
     </style>
 
     <title>New Tab</title>
@@ -30,11 +39,11 @@
     <script src="p5.js lib//addons/p5.dom.min.js"></script>
     <script src="objects.js"></script>
     <script src="functions.js"></script>
-    <script src="runProgram.js"></script>
+    <script src="script.js"></script>
   </head>
   <body>
     <div class="center" id="ageBox">
-      <div>Enter: &nbsp</div>
+      <div id="ageText">Enter: &nbsp</div>
       <div id="ageParent"></div>
     <div>
   </body>
